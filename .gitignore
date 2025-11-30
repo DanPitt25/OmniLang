@@ -13,4 +13,4 @@ Models/
 *.ckpt
 
 # Logs
-*.logIMS-Toucan/
+*.log
