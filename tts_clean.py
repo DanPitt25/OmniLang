@@ -19,21 +19,10 @@ PITCH = 1.0
 ENERGY = 1.0
 
 def get_tts():
-    if os.path.exists("tts_cache.pkl"):
-        with open("tts_cache.pkl", 'rb') as f:
-            return pickle.load(f)
-    
-    import contextlib
-    import io
-    
-    # Suppress phonemizer init messages
-    with contextlib.redirect_stdout(io.StringIO()):
-        tts = ToucanTTSInterface(device="cpu")
-        gan_path = hf_hub_download(repo_id="Flux9665/ToucanTTS", filename="embedding_gan.pt")
-        tts.wgan = GanWrapper(gan_path, device=tts.device, num_cached_voices=10)
-    
-    with open("tts_cache.pkl", 'wb') as f:
-        pickle.dump(tts, f)
+    # No caching for now
+    tts = ToucanTTSInterface(device="cpu")
+    gan_path = hf_hub_download(repo_id="Flux9665/ToucanTTS", filename="embedding_gan.pt")
+    tts.wgan = GanWrapper(gan_path, device=tts.device, num_cached_voices=10)
     return tts
 
 def speak(text):

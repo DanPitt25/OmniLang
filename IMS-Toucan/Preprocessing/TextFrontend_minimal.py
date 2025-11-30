@@ -6,7 +6,7 @@ Minimal TextFrontend for IPA passthrough only
 import re
 import torch
 from Preprocessing.articulatory_features import generate_feature_table
-from Preprocessing.articulatory_features import get_phone_to_id
+from Preprocessing.articulatory_features import get_feature_to_index_lookup
 
 class ArticulatoryCombinedTextFrontend:
 
@@ -29,10 +29,11 @@ class ArticulatoryCombinedTextFrontend:
         
         # No phonemizers - just pass through IPA
         self.g2p_lang = language
+        self.expand_abbreviations = lambda x: x
 
         # Initialize feature mappings
         self.phone_to_vector = generate_feature_table()
-        self.phone_to_id = get_phone_to_id()
+        self.phone_to_id = get_feature_to_index_lookup()
         self.id_to_phone = {v: k for k, v in self.phone_to_id.items()}
 
     def string_to_tensor(self, text, view=False, device="cpu", handle_missing=True, input_phonemes=False):
@@ -64,17 +65,17 @@ class ArticulatoryCombinedTextFrontend:
                 
             if char in self.phone_to_id:
                 if stressed_flag and self.use_stress:
-                    phone_key = char + "ˈ" if char + "ˈ" in self.phone_to_vector else char
+                    phone_id = self.phone_to_id[char + "ˈ"] if char + "ˈ" in self.phone_to_id else self.phone_to_id[char]
                 else:
-                    phone_key = char
-                phones_vector.append(self.phone_to_vector[phone_key])
+                    phone_id = self.phone_to_id[char]
+                phones_vector.append(self.phone_to_vector[phone_id])
                 stressed_flag = False
             elif handle_missing and char != " " and char != "~":
                 # Skip unknown characters silently
                 continue
                 
         if self.use_explicit_eos and self.add_silence_to_end:
-            phones_vector.append(self.phone_to_vector["#"])
+            phones_vector.append(self.phone_to_vector[self.phone_to_id["#"]])
             
         return torch.Tensor(phones_vector).to(device)
 
@@ -95,17 +96,3 @@ class ArticulatoryCombinedTextFrontend:
             if phoneme in self.phone_to_id:
                 id_list.append(self.phone_to_id[phoneme])
         return id_list
-
-    def expand_abbreviations(self, text):
-        """No abbreviation expansion - just return text as-is"""
-        return text
-
-
-def get_language_id(language):
-    """
-    Simple language ID mapping - returns tensor for compatibility
-    """
-    import torch
-    # Simple mapping - return hash as tensor
-    lang_id = hash(language) % 100
-    return torch.tensor([lang_id], dtype=torch.long)
