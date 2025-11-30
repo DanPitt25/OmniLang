@@ -1,0 +1,16 @@
+# Cache files
+tts_cache.pkl
+*.wav
+
+# Python
+__pycache__/
+*.pyc
+toucan_env/
+
+# Model cache
+Models/
+*.pt
+*.ckpt
+
+# Logs
+*.logIMS-Toucan/
